@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bill_details_tablel', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn('id');
+    $table->string('id')->primary();
         });
     }
 
@@ -22,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bill_details_tablel');
+        Schema::table('products', function (Blueprint $table) {
+            //
+        });
     }
 };
