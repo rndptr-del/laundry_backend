@@ -18,14 +18,10 @@ class StoreBillRequest extends FormRequest
             'billDetails.*.id' => 'required|string',
             'billDetails.*.price' => 'required|integer|min:0',
             'billDetails.*.qty' => 'required|integer|min:1',
-            'billDetails.*.createdAt' => 'required|date',
-            'billDetails.*.updatedAt' => 'required|date',
             'billDetails.*.product.id' => 'required|string',
             'billDetails.*.product.name' => 'required|string',
             'billDetails.*.product.price' => 'required|integer|min:0',
             'billDetails.*.product.type' => 'required|string',
-            'billDetails.*.product.createdAt' => 'required|date',
-            'billDetails.*.product.updatedAt' => 'required|date',
         ];
     }
 }

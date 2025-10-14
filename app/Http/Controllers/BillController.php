@@ -5,57 +5,120 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBillRequest;
 use App\Models\Bill;
 use App\Models\BillDetail;
-use App\Models\Product; // Pastikan model Product diimpor
+use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // Impor kelas Log
+use Illuminate\Support\Facades\Log;
 
 class BillController extends Controller
 {
+    /**
+     * Tampilkan semua bills dengan relasi customer, billDetails, dan product.
+     */
+    public function index()
+    {
+        try {
+            $bills = Bill::with(['customer', 'billDetails.product', 'user'])->get();
+
+            return response()->json($bills, 200);
+        } catch (\Exception $e) {
+            Log::error('Error fetching bills: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to fetch bills',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Simpan bill baru beserta detailnya.
+     */
     public function store(StoreBillRequest $request)
     {
         try {
-            // Kita gunakan database transaction untuk memastikan semua operasi berhasil
             DB::transaction(function () use ($request) {
+                // Hitung total harga dari detail
+                $total = 0;
+
+                foreach ($request->billDetails as $detail) {
+                    $total += $detail['qty'] * $detail['price'];
+                }
+
                 // Buat Bill baru
                 $bill = Bill::create([
-                    'id' => $request->input('id', uniqid()),
-                    'customer_id' => $request->customerId,
-                    'user_id' => $request->userId,
+                    'id'           => $request->input('id', uniqid()),
+                    'customer_id'  => $request->customerId,
+                    'user_id'      => $request->userId,
+                    'total_amount' => $total,
+                    'paid_amount'  => 0,
+                    'status'       => 'UNPAID', // default
                 ]);
 
                 // Loop untuk membuat Bill Details dan Products
                 foreach ($request->billDetails as $detail) {
-                    // Masukkan atau update data produk
-                    Product::upsert([
-                        'id' => $detail['product']['id'],
-                        'name' => $detail['product']['name'],
+                    // Insert atau update produk
+                    Product::upsert([[
+                        'id'    => $detail['product']['id'],
+                        'name'  => $detail['product']['name'],
                         'price' => $detail['product']['price'],
-                        'type' => $detail['product']['type'],
-                        'created_at' => $detail['product']['createdAt'],
-                        'updated_at' => $detail['product']['updatedAt'],
-                    ], ['id']);
+                        'type'  => $detail['product']['type'],
+                    ]], ['id']);
 
-                    // Buat Bill Detail dan kaitkan dengan Bill yang baru dibuat
-                    // Menggunakan relasi `billDetails()` lebih rapi dan aman
+                    // Buat Bill Detail
                     $bill->billDetails()->create([
-                        'id' => $detail['id'],
+                        'id'         => $detail['id'],
                         'product_id' => $detail['product']['id'],
-                        'qty' => $detail['qty'],
-                        'price' => $detail['price'],
-                        'created_at' => $detail['createdAt'],
-                        'updated_at' => $detail['updatedAt'],
+                        'qty'        => $detail['qty'],
+                        'price'      => $detail['price'],
                     ]);
                 }
             });
 
-            // Jika semua operasi berhasil, kembalikan respons 201
             return response()->json(['message' => 'Bill created successfully'], 201);
         } catch (\Exception $e) {
-            // Log pesan kesalahan yang spesifik
             Log::error('Error creating bill: ' . $e->getMessage());
-            
-            // Kembalikan respons yang sesuai dengan error, misalnya 500
-            return response()->json(['message' => 'Failed to create bill', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Failed to create bill',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
+
+    /**
+     * Konfirmasi pembayaran bill.
+     */
+    public function confirmPayment(Request $request, $id)
+{
+    try {
+        // Ambil bill lengkap dengan relasi
+        $bill = Bill::with(['customer', 'billDetails.product', 'user'])->findOrFail($id);
+
+        $paidAmount = $request->input('amount', 0);
+        $bill->paid_amount += $paidAmount;
+
+        // Update status
+        if ($bill->paid_amount >= $bill->total_amount) {
+            $bill->status = 'PAID';
+            $bill->payment_date = now();
+        } elseif ($bill->paid_amount > 0) {
+            $bill->status = 'PARTIAL';
+        }
+
+        $bill->save();
+
+        // Reload relasi setelah save supaya data fresh
+        $bill->load(['customer', 'billDetails.product', 'user']);
+
+        return response()->json([
+            'message' => 'Payment confirmed',
+            'bill'    => $bill
+        ], 200);
+    } catch (\Exception $e) {
+        Log::error('Error confirming payment: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Failed to confirm payment',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
 }
