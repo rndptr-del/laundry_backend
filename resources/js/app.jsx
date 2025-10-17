@@ -4,6 +4,9 @@ import { createInertiaApp } from "@inertiajs/react";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { InertiaProgress } from "@inertiajs/progress"; // opsional progress bar
 import "../css/app.css";
+import {route} from "ziggy-js";
+
+window.route = route;
 
 createInertiaApp({
   resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,11 +33,7 @@ Route::get('/products', function () {
 });
 
 // ✅ Halaman Pelanggan
-Route::get('/customers', function () {
-    return Inertia::render('CustomersPage', [
-        'title' => 'Manajemen Pelanggan',
-    ]);
-});
+Route::resource('customers', CustomerController::class);
 
 // ✅ Halaman Transaksi
 Route::get('/transactions', function () {

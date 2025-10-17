@@ -1,45 +1,42 @@
 import { useEffect, useState } from "react";
 import { Users, UserPlus, Activity } from "lucide-react";
-import api from "../services/api";
+import { useForm, usePage, router } from "@inertiajs/react";
+import {route} from "ziggy-js";
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({
+  const {customers} = usePage().props;
+  const [editId, setEditId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const {data, setData, post, put, delete: destroy, reset} = useForm ({
     name: "",
     phoneNumber: "",
     address: "",
   });
-  const [editId, setEditId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchCustomers = async () => {
-    try {
-      const res = await api.get("/customers");
-      setCustomers(res.data || []);
-    } catch (err) {
-      console.error("Gagal fetch pelanggan:", err);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
+    
       if (editId) {
-        await api.put(`/customers/${editId}`, form);
+        router.put(route("customers.update",{customer: editId}), data, {
+          onSuccess: () => {
+            reset();
+            setEditId(null);
+            setIsModalOpen(false);
+          },
+        });
       } else {
-        await api.post("/customers", form);
+        router.post(route("customers.store"), data, {
+          onSuccess: () => {
+            reset();
+            setIsModalOpen(false);
+          },
+        });
       }
-      setForm({ name: "", phoneNumber: "", address: "" });
-      setEditId(null);
-      setIsModalOpen(false);
-      fetchCustomers();
-    } catch (err) {
-      alert("Gagal menyimpan data pelanggan.");
-    }
-  };
+    };
 
   const handleEdit = (cust) => {
-    setForm({
+    setData({
       name: cust.name,
       phoneNumber: cust.phoneNumber,
       address: cust.address,
@@ -50,18 +47,9 @@ export default function CustomersPage() {
 
   const handleDelete = async (id) => {
     if (confirm("Yakin ingin menghapus pelanggan ini?")) {
-      try {
-        await api.delete(`/customers/${id}`);
-        fetchCustomers();
-      } catch (err) {
-        alert("Gagal menghapus pelanggan.");
-      }
+      router.delete(`/customers/${id}`);
     }
   };
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
 
   // Statistik dummy (nanti bisa dihubungkan ke API)
   const totalCustomers = customers.length;
@@ -79,7 +67,7 @@ export default function CustomersPage() {
           </h2>
           <button
             onClick={() => {
-              setForm({ name: "", phoneNumber: "", address: "" });
+              reset();
               setEditId(null);
               setIsModalOpen(true);
             }}
@@ -194,8 +182,8 @@ export default function CustomersPage() {
                 </label>
                 <input
                   type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  value={data.name}
+                  onChange={(e) => setData( "name", e.target.value )}
                   className="w-full border p-2 rounded focus:ring focus:ring-blue-200"
                   placeholder="Nama Pelanggan"
                   required
@@ -207,10 +195,9 @@ export default function CustomersPage() {
                 </label>
                 <input
                   type="text"
-                  value={form.phoneNumber}
+                  value={data.phoneNumber}
                   onChange={(e) =>
-                    setForm({ ...form, phoneNumber: e.target.value })
-                  }
+                    setData("phoneNumber", e.target.value )}
                   className="w-full border p-2 rounded focus:ring focus:ring-blue-200"
                   placeholder="08xxxxxxxxxx"
                   required
@@ -222,10 +209,9 @@ export default function CustomersPage() {
                 </label>
                 <input
                   type="text"
-                  value={form.address}
+                  value={data.address}
                   onChange={(e) =>
-                    setForm({ ...form, address: e.target.value })
-                  }
+                    setData("address", e.target.value )}
                   className="w-full border p-2 rounded focus:ring focus:ring-blue-200"
                   placeholder="Alamat lengkap"
                   required

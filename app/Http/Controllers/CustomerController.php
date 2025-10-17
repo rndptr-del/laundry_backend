@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\Customers;
 use COM;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
@@ -14,7 +14,8 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        return Customers::all();
+        $customers = Customers::all();
+        return Inertia::render('CustomersPage', ['customers' => $customers]);
     }
 
     /**
@@ -37,7 +38,7 @@ class CustomerController extends Controller
         ]);
 
         $customer = Customers::create($validate);
-        return response()->json($customer, 201);
+        return redirect()->route('customers.index')->with('success', 'Pelanggan berhasil ditambahkan');
     }
 
     /**
@@ -64,7 +65,7 @@ class CustomerController extends Controller
     public function update(Request $request, $id)
     {
         $customer = Customers::find($id);
-        if (!$customer) return response()->json(['message' => 'Customer not found'], 404);
+        if (!$customer) return redirect()->back()->with('error', 'Customer tidak ditemukan.');
 
         $validate = $request->validate([
             'name' => 'sometimes|required|string|max:50',
@@ -73,7 +74,7 @@ class CustomerController extends Controller
         ]);
 
         $customer->update($validate);
-        return $customer;
+        return redirect()->route('customers.index')->with('success', 'Data pelanggan berhasil diperbarui!');
     }
 
     /**
@@ -82,9 +83,9 @@ class CustomerController extends Controller
     public function destroy( $id)
     {
         $customer = Customers::find($id);
-        if (!$customer) return response()->json(['message' => 'Customer not found'], 404);
+        if (!$customer) return redirect()->back()->with('error', 'Customer tidak ditemukan.');
 
         $customer->delete();
-        return response()->json(['message' => 'Customer deleted']);
+        return redirect()->route('customers.index')->with('success', 'Data pelanggan berhasil dihapus');
     }
 }
