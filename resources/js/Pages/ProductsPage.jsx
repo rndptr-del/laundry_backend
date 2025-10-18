@@ -1,80 +1,58 @@
 import { useEffect, useState } from "react";
 import { Plus, Edit, Trash2, X, Package, BarChart3 } from "lucide-react";
-import api from "../services/api";
+import { usePage} from "@inertiajs/react";
+import { Inertia } from "@inertiajs/inertia";
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState([]);
+  const {props} = usePage();
+  const products = props.products || [];
   const [form, setForm] = useState({ name: "", price: "", type: "kg" });
   const [editId, setEditId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const fetchProducts = async () => {
-    try {
-      const res = await api.get("/products");
-      setProducts(res.data || []);
-    } catch (err) {
-      console.error("Gagal fetch produk:", err);
-      setProducts([]);
-    }
-  };
+// Hitung statistik
+  const totalProduk = products.length;
+  const totalHarga = products.reduce((acc, p) => acc + Number(p.price), 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    try {
-      const payload = {
+
+      const data = {
         name: form.name,
         price: parseInt(form.price, 10),
         type: form.type,
       };
 
       if (editId) {
-        await api.put(`/products/${editId}`, payload);
+        Inertia.put(`/products/${editId}`, data, {
+          onSuccess: () => {
+            setForm({name: "", price: "", type: "kg"});
+            setEditId(null);
+            setIsModalOpen(false);
+          },
+        });
       } else {
-        await api.post("/products", payload);
+        Inertia.post("/products", data, {
+          onSuccess: () => {
+            setForm({name:"", price:"", type:"kg"});
+            setIsModalOpen(false);
+          },
+        });
       }
+    };
 
-      setForm({ name: "", price: "", type: "kg" });
-      setEditId(null);
-      setIsModalOpen(false);
-      fetchProducts();
-    } catch (err) {
-      console.error("Gagal menyimpan produk:", err.response?.data || err.message);
-      alert("Gagal menyimpan produk.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleEdit = (produk) => {
-    setForm({
-      name: produk.name,
-      price: produk.price,
-      type: produk.type || "kg",
-    });
-    setEditId(produk.id);
+  const handleEdit = (p) => {
+    setForm({ name: p.name, price: p.price, type: p.type });
+    setEditId(p.id);
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (confirm("Yakin ingin menghapus produk ini?")) {
-      try {
-        await api.delete(`/products/${id}`);
-        fetchProducts();
-      } catch (err) {
-        alert("Gagal menghapus produk.");
-      }
+      Inertia.delete(`/products/${id}`);
     }
   };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  // Hitung statistik
-  const totalProduk = products.length;
-  const totalHarga = products.reduce((acc, p) => acc + Number(p.price), 0);
 
   return (
     <div className="p-6 space-y-6">

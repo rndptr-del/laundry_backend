@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     // Ambil semua produk
     public function index()
     {
-        return Product::all();
+        $Products = Product::all();
+        return Inertia::render('ProductsPage', ['products' => $Products]);
     }
 
     // Simpan produk baru
@@ -23,8 +25,7 @@ class ProductController extends Controller
         ]);
 
         $product = Product::create($validated);
-
-        return response()->json($product, 201);
+        return redirect()->route('product.index')->with('success', 'Produk berhasil ditambahkan');
     }
 
     // Tampilkan produk berdasarkan ID
@@ -44,8 +45,7 @@ class ProductController extends Controller
 
         $product = Product::findOrFail($id);
         $product->update($validated);
-
-        return response()->json($product, 200);
+        return redirect()->route('product.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
     // Hapus produk
@@ -54,6 +54,6 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
         $product->delete();
 
-        return response()->json(null, 204);
+        return redirect()->route('product.index')->with('success', 'Produk berhasil dihapus');
     }
 }

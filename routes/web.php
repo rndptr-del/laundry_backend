@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -34,6 +35,10 @@ Route::get('/products', function () {
 
 // ✅ Halaman Pelanggan
 Route::resource('customers', CustomerController::class);
+Route::get('/products', [ProductController::class, 'index'])->name('product.index');
+Route::post('/products', [ProductController::class, 'store'])->name('product.store');
+Route::put('/products/{id}', [ProductController::class, 'update'])->name('product.update');
+Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('product.destroy');
 
 // ✅ Halaman Transaksi
 Route::get('/transactions', function () {
