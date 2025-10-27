@@ -15,32 +15,40 @@ export default function ProductsPage() {
   const totalHarga = products.reduce((acc, p) => acc + Number(p.price), 0);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
+  e.preventDefault();
+  setIsSaving(true);
 
-      const data = {
-        name: form.name,
-        price: parseInt(form.price, 10),
-        type: form.type,
-      };
+  const data = {
+    name: form.name,
+    price: parseInt(form.price, 10),
+    type: form.type,
+  };
 
-      if (editId) {
-        Inertia.put(`/products/${editId}`, data, {
-          onSuccess: () => {
-            setForm({name: "", price: "", type: "kg"});
-            setEditId(null);
-            setIsModalOpen(false);
-          },
-        });
-      } else {
-        Inertia.post("/products", data, {
-          onSuccess: () => {
-            setForm({name:"", price:"", type:"kg"});
-            setIsModalOpen(false);
-          },
-        });
-      }
-    };
+  if (editId) {
+  console.log("🔧 UPDATE:", `/products/${editId}`, data); // Tambahkan ini
+  Inertia.put(`/products/${editId}`, data, {
+    onSuccess: () => {
+      setForm({ name: "", price: "", type: "kg" });
+      setEditId(null);
+      setIsModalOpen(false);
+      setIsSaving(false);
+    },
+    onError: () => setIsSaving(false),
+  });
+}
+ else {
+    Inertia.post("/products", data, {
+      preserveScroll: true,
+      onSuccess: () => {
+        setForm({ name: "", price: "", type: "kg" });
+        setIsModalOpen(false);
+        setIsSaving(false);
+      },
+      onError: () => setIsSaving(false),
+    });
+  }
+};
+
 
   const handleEdit = (p) => {
     setForm({ name: p.name, price: p.price, type: p.type });

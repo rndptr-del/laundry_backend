@@ -12,11 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bills', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('customer_id');
-            $table->string('user_id');
-            $table->timestamps();
-        });
+    $table->string('id', 36)->primary();
+    $table->string('customer_id');
+    $table->string('user_id');
+    $table->decimal('total_amount', 12, 2)->default(0);
+    $table->decimal('paid_amount', 12, 2)->default(0);
+    $table->string('status')->default('UNPAID');
+    $table->timestamp('payment_date')->nullable();
+    $table->timestamps();
+});
+
     }
 
     /**

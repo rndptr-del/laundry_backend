@@ -18,7 +18,7 @@ export default function CustomersPage() {
     e.preventDefault();
     
       if (editId) {
-        router.put(route("customers.update",{customer: editId}), data, {
+        router.patch(route("customers.update",{customer: editId}), data, {
           onSuccess: () => {
             reset();
             setEditId(null);

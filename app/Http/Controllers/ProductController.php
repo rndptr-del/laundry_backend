@@ -4,18 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-    // Ambil semua produk
+    /**
+     * Ambil semua produk (GET /api/products)
+     */
     public function index()
     {
-        $Products = Product::all();
-        return Inertia::render('ProductsPage', ['products' => $Products]);
+        $products = Product::all();
+        return response()->json($products, 200);
     }
 
-    // Simpan produk baru
+    /**
+     * Tambah produk baru (POST /api/products)
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -25,16 +28,30 @@ class ProductController extends Controller
         ]);
 
         $product = Product::create($validated);
-        return redirect()->route('product.index')->with('success', 'Produk berhasil ditambahkan');
+
+        return response()->json([
+            'message' => 'Produk berhasil ditambahkan',
+            'data' => $product,
+        ], 201);
     }
 
-    // Tampilkan produk berdasarkan ID
+    /**
+     * Ambil satu produk (GET /api/products/{id})
+     */
     public function show($id)
     {
-        return Product::findOrFail($id);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Produk tidak ditemukan'], 404);
+        }
+
+        return response()->json($product, 200);
     }
 
-    // Update produk
+    /**
+     * Update produk (PUT /api/products/{id})
+     */
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -43,17 +60,33 @@ class ProductController extends Controller
             'type'  => 'required|string|max:50',
         ]);
 
-        $product = Product::findOrFail($id);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Produk tidak ditemukan'], 404);
+        }
+
         $product->update($validated);
-        return redirect()->route('product.index')->with('success', 'Produk berhasil diperbarui!');
+
+        return response()->json([
+            'message' => 'Produk berhasil diperbarui',
+            'data' => $product,
+        ], 200);
     }
 
-    // Hapus produk
+    /**
+     * Hapus produk (DELETE /api/products/{id})
+     */
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Produk tidak ditemukan'], 404);
+        }
+
         $product->delete();
 
-        return redirect()->route('product.index')->with('success', 'Produk berhasil dihapus');
+        return response()->json(['message' => 'Produk berhasil dihapus'], 200);
     }
 }

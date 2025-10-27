@@ -8,9 +8,16 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
 
 Route::apiResource('products', ProductController::class);
 Route::apiResource( 'customers', CustomerController::class);
+
+Route::get('/reports/transactions', [ReportController::class, 'transactions']);
+Route::get('/reports/customers', [ReportController::class, 'customers']);
+Route::get('/reports/products', [ReportController::class, 'products']);
+Route::get('/reports/transactions/export/pdf', [ReportController::class, 'exportTransactionsPdf']);
+Route::get('/reports/transactions/export/excel', [ReportController::class, 'exportTransactionsExcel']);
 
 Route::post('/bills/{id}/confirm-payment', [BillController::class, 'confirmPayment']);
 Route::apiResource('users', UserController::class);

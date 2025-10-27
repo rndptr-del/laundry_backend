@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customers;
-use COM;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
@@ -15,15 +13,10 @@ class CustomerController extends Controller
     public function index()
     {
         $customers = Customers::all();
-        return Inertia::render('CustomersPage', ['customers' => $customers]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'data' => $customers
+        ], 200);
     }
 
     /**
@@ -38,7 +31,12 @@ class CustomerController extends Controller
         ]);
 
         $customer = Customers::create($validate);
-        return redirect()->route('customers.index')->with('success', 'Pelanggan berhasil ditambahkan');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pelanggan berhasil ditambahkan',
+            'data' => $customer
+        ], 201);
     }
 
     /**
@@ -47,16 +45,18 @@ class CustomerController extends Controller
     public function show($id)
     {
         $customer = Customers::find($id);
-        if (!$customer) return response()->json(['message' => 'Customer not found'], 404);
-        return $customer;
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Customers $customer)
-    {
-        //
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $customer
+        ], 200);
     }
 
     /**
@@ -65,7 +65,13 @@ class CustomerController extends Controller
     public function update(Request $request, $id)
     {
         $customer = Customers::find($id);
-        if (!$customer) return redirect()->back()->with('error', 'Customer tidak ditemukan.');
+
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer tidak ditemukan'
+            ], 404);
+        }
 
         $validate = $request->validate([
             'name' => 'sometimes|required|string|max:50',
@@ -74,18 +80,33 @@ class CustomerController extends Controller
         ]);
 
         $customer->update($validate);
-        return redirect()->route('customers.index')->with('success', 'Data pelanggan berhasil diperbarui!');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pelanggan berhasil diperbarui',
+            'data' => $customer
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy( $id)
+    public function destroy($id)
     {
         $customer = Customers::find($id);
-        if (!$customer) return redirect()->back()->with('error', 'Customer tidak ditemukan.');
+
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer tidak ditemukan'
+            ], 404);
+        }
 
         $customer->delete();
-        return redirect()->route('customers.index')->with('success', 'Data pelanggan berhasil dihapus');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pelanggan berhasil dihapus'
+        ], 200);
     }
 }

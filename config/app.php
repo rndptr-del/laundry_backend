@@ -53,6 +53,8 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
+
 
     /*
     |--------------------------------------------------------------------------
